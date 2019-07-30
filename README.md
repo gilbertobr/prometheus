@@ -11,3 +11,28 @@
  * chmod +x /usr/local/bin/alertmanager (Docker)
  * chmod +x /etc/systemd/system/alertmanager.service (Docker)
  * nohup /usr/local/bin/alertmanager --config.file=/etc/alertmanager/config-rc.yml --storage.path /var/lib/alertmanager/data & (Docker)
+
+## Para adicionar autenticação na rota (/metrics)
+Gemfile
+``` gem 'prometheus-client', '~> 0.9.0' ```
+
+config.ru
+
+```
+require 'rack'
+require 'prometheus/middleware/collector'
+require 'prometheus/middleware/exporter'
+use Prometheus::Middleware::Collector
+
+run ->(_) { [200, {'Content-Type' => 'text/html'}, ['OK']] }
+
+  map '/metrics' do
+    use Rack::Auth::Basic, 'Metrics Prometheus' do |username, password|
+      Rack::Utils.secure_compare('admin', 'admin')
+    end
+
+    use Rack::Deflater
+    use Prometheus::Middleware::Exporter, path: ''
+    run ->(_) { [500, { 'Content-Type' => 'text/html' }, ['Unreachable!']] }
+  end
+```
