@@ -1,0 +1,31 @@
+groups:
+- name: alertas-prometheus
+  rules:
+  # Alert for any instance that is unreachable for >5 minutes.
+  - alert: service_down
+    expr: up == 0
+    for: 2m
+    labels:
+      severity: page
+    annotations:
+      summary: "Instance {{ $labels.instance }} fora do ar"
+      description: "{{ $labels.instance }} da tarefa {{ $labels.job }} ficou inativo por mais de 2 minutos."
+ 
+  - alert: HTTP_erro4xx
+    expr: rate(http_server_requests_total{code=~"^4.."}[5m]) != 0
+    for: 2m
+    labels:
+     severity: warning
+    annotations:
+      summary: "Erro 4xx (instance {{ $labels.instance }})"
+      description: "Foi encontrada solicitações HTTP(s) com status 4xx\n  Valor = {{ $value }}\n  Labels: {{ $labels }}"
+
+  - alert: HTTP_erro5xx
+    expr: rate(http_server_requests_total{code=~"^5.."}[5m]) != 0
+    for: 2m
+    labels:
+     severity: warning
+    annotations:
+      summary: "Erro 5xx (instance {{ $labels.instance }})"
+      description: "Foi encontrada solicitações HTTP(s) com status 5xx\n  Valor = {{ $value }}\n  Labels: {{ $labels }}"
+
